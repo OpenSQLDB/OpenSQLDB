@@ -1,0 +1,12 @@
+--- suite/mtr2/single.result
++++ suite/mtr2/single.reject
+@@ -1,6 +1,6 @@
+ select 1;
+ 1
+ 1
+-select 2;
+-2
+-2
++select 3;
++3
++3

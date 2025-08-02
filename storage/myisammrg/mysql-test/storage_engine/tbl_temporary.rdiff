@@ -1,0 +1,10 @@
+--- tbl_temporary.result
++++ tbl_temporary.reject
+@@ -6,6 +6,6 @@
+ t1	CREATE TEMPORARY TABLE `t1` (
+   `a` int(11) DEFAULT NULL,
+   `b` char(8) DEFAULT NULL
+-) ENGINE=<STORAGE_ENGINE> DEFAULT CHARSET=latin1
++) ENGINE=<STORAGE_ENGINE> DEFAULT CHARSET=latin1 INSERT_METHOD=LAST UNION=(`mrg`.`t1`)
+ DROP TEMPORARY TABLE t1;
+ DROP TABLE t1;

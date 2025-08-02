@@ -1,0 +1,5 @@
+mariadb (1:12.1.0) unstable; urgency=medium
+
+  * Initial Release
+
+ -- Sergei Golubchik <serg@mariadb.org> Mon Apr 28 10:19:29 CEST 2025

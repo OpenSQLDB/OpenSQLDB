@@ -1,0 +1,8 @@
+!include ../galera_4nodes.cnf
+
+[mysqld]
+wsrep-ignore-apply-errors=0
+loose-galera-vote-rejoin-dml=0
+
+[ENV]
+galera_cluster_size=4

@@ -1,0 +1,341 @@
+DROP TABLE IF EXISTS t1;
+SELECT IF(NULL AND 1, 1, 2), IF(1 AND NULL, 1, 2);
+IF(NULL AND 1, 1, 2)	IF(1 AND NULL, 1, 2)
+2	2
+SELECT NULL AND 1, 1 AND NULL, 0 AND NULL, NULL and 0;
+NULL AND 1	1 AND NULL	0 AND NULL	NULL and 0
+NULL	NULL	0	0
+create table t1 (a int);
+insert into t1 values (0),(1),(NULL);
+SELECT * FROM t1 WHERE IF(a AND 1, 0, 1);
+a
+0
+NULL
+SELECT * FROM t1 WHERE IF(1 AND a, 0, 1);
+a
+0
+NULL
+SELECT * FROM t1 where NOT(a AND 1);
+a
+0
+SELECT * FROM t1 where NOT(1 AND a);
+a
+0
+SELECT * FROM t1 where (a AND 1)=0;
+a
+0
+SELECT * FROM t1 where (1 AND a)=0;
+a
+0
+SELECT * FROM t1 where (1 AND a)=1;
+a
+1
+SELECT * FROM t1 where (1 AND a) IS NULL;
+a
+NULL
+set sql_mode='high_not_precedence';
+select * from t1 where not a between 2 and 3;
+a
+set sql_mode=default;
+select * from t1 where not a between 2 and 3;
+a
+0
+1
+select a, a is false, a is true, a is unknown from t1;
+a	a is false	a is true	a is unknown
+0	1	0	0
+1	0	1	0
+NULL	0	0	1
+select a, a is not false, a is not true, a is not unknown from t1;
+a	a is not false	a is not true	a is not unknown
+0	0	1	1
+1	1	0	1
+NULL	1	1	0
+SET @a=0, @b=0;
+SELECT * FROM t1 WHERE NULL AND (@a:=@a+1);
+a
+SELECT * FROM t1 WHERE NOT(a>=0 AND NULL AND (@b:=@b+1));
+a
+SELECT * FROM t1 WHERE a=2 OR (NULL AND (@a:=@a+1));
+a
+SELECT * FROM t1 WHERE NOT(a=2 OR (NULL AND (@b:=@b+1)));
+a
+DROP TABLE t1;
+create table t1 (a int, b int);
+insert into t1 values(null, null), (0, null), (1, null), (null, 0), (null, 1), (0, 0), (0, 1), (1, 0), (1, 1);
+select ifnull(A, 'N') as A, ifnull(B, 'N') as B, ifnull(not A, 'N') as nA, ifnull(not B, 'N') as nB, ifnull(A and B, 'N') as AB, ifnull(not (A and B), 'N') as `n(AB)`, ifnull((not A or not B), 'N') as nAonB, ifnull(A or B, 'N') as AoB, ifnull(not(A or B), 'N') as `n(AoB)`, ifnull(not A and not B, 'N') as nAnB from t1;
+A	B	nA	nB	AB	n(AB)	nAonB	AoB	n(AoB)	nAnB
+N	N	N	N	N	N	N	N	N	N
+0	N	1	N	0	1	1	N	N	N
+1	N	0	N	N	N	N	1	0	0
+N	0	N	1	0	1	1	N	N	N
+N	1	N	0	N	N	N	1	0	0
+0	0	1	1	0	1	1	0	1	1
+0	1	1	0	0	1	1	1	0	0
+1	0	0	1	0	1	1	1	0	0
+1	1	0	0	1	0	0	1	0	0
+select ifnull(A=1, 'N') as A, ifnull(B=1, 'N') as B, ifnull(not (A=1), 'N') as nA, ifnull(not (B=1), 'N') as nB, ifnull((A=1) and (B=1), 'N') as AB, ifnull(not ((A=1) and (B=1)), 'N') as `n(AB)`, ifnull((not (A=1) or not (B=1)), 'N') as nAonB, ifnull((A=1) or (B=1), 'N') as AoB, ifnull(not((A=1) or (B=1)), 'N') as `n(AoB)`, ifnull(not (A=1) and not (B=1), 'N') as nAnB from t1;
+A	B	nA	nB	AB	n(AB)	nAonB	AoB	n(AoB)	nAnB
+N	N	N	N	N	N	N	N	N	N
+0	N	1	N	0	1	1	N	N	N
+1	N	0	N	N	N	N	1	0	0
+N	0	N	1	0	1	1	N	N	N
+N	1	N	0	N	N	N	1	0	0
+0	0	1	1	0	1	1	0	1	1
+0	1	1	0	0	1	1	1	0	0
+1	0	0	1	0	1	1	1	0	0
+1	1	0	0	1	0	0	1	0	0
+drop table t1;
+# Start of 10.6 tests
+#
+# MDEV-34189 Unexpected error on `WHERE inet6col`
+#
+CREATE TABLE t1 (id INT NOT NULL PRIMARY KEY, a INT, KEY(a));
+INSERT INTO t1 VALUES (-1,NULL);
+INSERT INTO t1 SELECT seq,seq FROM seq_0_to_31;
+EXPLAIN EXTENDED
+SELECT id, a FROM t1 WHERE a;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	ALL	a	NULL	NULL	NULL	33	96.97	Using where
+Warnings:
+Note	1003	select `test`.`t1`.`id` AS `id`,`test`.`t1`.`a` AS `a` from `test`.`t1` where `test`.`t1`.`a` is true
+SELECT id, a FROM t1 WHERE a;
+id	a
+1	1
+2	2
+3	3
+4	4
+5	5
+6	6
+7	7
+8	8
+9	9
+10	10
+11	11
+12	12
+13	13
+14	14
+15	15
+16	16
+17	17
+18	18
+19	19
+20	20
+21	21
+22	22
+23	23
+24	24
+25	25
+26	26
+27	27
+28	28
+29	29
+30	30
+31	31
+EXPLAIN EXTENDED
+SELECT id, a FROM t1 WHERE NOT a;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	range	a	a	5	NULL	1	100.00	Using index condition
+Warnings:
+Note	1003	select `test`.`t1`.`id` AS `id`,`test`.`t1`.`a` AS `a` from `test`.`t1` where `test`.`t1`.`a` is false
+SELECT id, a FROM t1 WHERE NOT a;
+id	a
+0	0
+EXPLAIN EXTENDED
+SELECT id, a FROM t1 WHERE a IS TRUE;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	ALL	a	NULL	NULL	NULL	33	96.97	Using where
+Warnings:
+Note	1003	select `test`.`t1`.`id` AS `id`,`test`.`t1`.`a` AS `a` from `test`.`t1` where `test`.`t1`.`a` is true
+SELECT id, a FROM t1 WHERE a IS TRUE;
+id	a
+1	1
+2	2
+3	3
+4	4
+5	5
+6	6
+7	7
+8	8
+9	9
+10	10
+11	11
+12	12
+13	13
+14	14
+15	15
+16	16
+17	17
+18	18
+19	19
+20	20
+21	21
+22	22
+23	23
+24	24
+25	25
+26	26
+27	27
+28	28
+29	29
+30	30
+31	31
+EXPLAIN EXTENDED
+SELECT id, a FROM t1 WHERE NOT a IS TRUE;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	range	a	a	5	NULL	2	100.00	Using index condition
+Warnings:
+Note	1003	select `test`.`t1`.`id` AS `id`,`test`.`t1`.`a` AS `a` from `test`.`t1` where `test`.`t1`.`a` is not true
+SELECT id, a FROM t1 WHERE NOT a IS TRUE;
+id	a
+-1	NULL
+0	0
+EXPLAIN EXTENDED
+SELECT id, a FROM t1 WHERE a IS NOT TRUE;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	range	a	a	5	NULL	2	100.00	Using index condition
+Warnings:
+Note	1003	select `test`.`t1`.`id` AS `id`,`test`.`t1`.`a` AS `a` from `test`.`t1` where `test`.`t1`.`a` is not true
+SELECT id, a FROM t1 WHERE a IS NOT TRUE;
+id	a
+-1	NULL
+0	0
+EXPLAIN EXTENDED
+SELECT id, a FROM t1 WHERE NOT a IS NOT TRUE;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	ALL	a	NULL	NULL	NULL	33	96.97	Using where
+Warnings:
+Note	1003	select `test`.`t1`.`id` AS `id`,`test`.`t1`.`a` AS `a` from `test`.`t1` where `test`.`t1`.`a` is true
+SELECT id, a FROM t1 WHERE NOT a IS NOT TRUE;
+id	a
+1	1
+2	2
+3	3
+4	4
+5	5
+6	6
+7	7
+8	8
+9	9
+10	10
+11	11
+12	12
+13	13
+14	14
+15	15
+16	16
+17	17
+18	18
+19	19
+20	20
+21	21
+22	22
+23	23
+24	24
+25	25
+26	26
+27	27
+28	28
+29	29
+30	30
+31	31
+EXPLAIN EXTENDED
+SELECT id, a FROM t1 WHERE a IS FALSE;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	range	a	a	5	NULL	1	100.00	Using index condition
+Warnings:
+Note	1003	select `test`.`t1`.`id` AS `id`,`test`.`t1`.`a` AS `a` from `test`.`t1` where `test`.`t1`.`a` is false
+SELECT id, a FROM t1 WHERE a IS FALSE;
+id	a
+0	0
+EXPLAIN EXTENDED
+SELECT id, a FROM t1 WHERE NOT a IS FALSE;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	ALL	a	NULL	NULL	NULL	33	96.97	Using where
+Warnings:
+Note	1003	select `test`.`t1`.`id` AS `id`,`test`.`t1`.`a` AS `a` from `test`.`t1` where `test`.`t1`.`a` is not false
+SELECT id, a FROM t1 WHERE NOT a IS FALSE;
+id	a
+-1	NULL
+1	1
+2	2
+3	3
+4	4
+5	5
+6	6
+7	7
+8	8
+9	9
+10	10
+11	11
+12	12
+13	13
+14	14
+15	15
+16	16
+17	17
+18	18
+19	19
+20	20
+21	21
+22	22
+23	23
+24	24
+25	25
+26	26
+27	27
+28	28
+29	29
+30	30
+31	31
+EXPLAIN EXTENDED
+SELECT id, a FROM t1 WHERE a IS NOT FALSE;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	ALL	a	NULL	NULL	NULL	33	96.97	Using where
+Warnings:
+Note	1003	select `test`.`t1`.`id` AS `id`,`test`.`t1`.`a` AS `a` from `test`.`t1` where `test`.`t1`.`a` is not false
+SELECT id, a FROM t1 WHERE a IS NOT FALSE;
+id	a
+-1	NULL
+1	1
+2	2
+3	3
+4	4
+5	5
+6	6
+7	7
+8	8
+9	9
+10	10
+11	11
+12	12
+13	13
+14	14
+15	15
+16	16
+17	17
+18	18
+19	19
+20	20
+21	21
+22	22
+23	23
+24	24
+25	25
+26	26
+27	27
+28	28
+29	29
+30	30
+31	31
+EXPLAIN EXTENDED
+SELECT id, a FROM t1 WHERE NOT a IS NOT FALSE;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	range	a	a	5	NULL	1	100.00	Using index condition
+Warnings:
+Note	1003	select `test`.`t1`.`id` AS `id`,`test`.`t1`.`a` AS `a` from `test`.`t1` where `test`.`t1`.`a` is false
+SELECT id, a FROM t1 WHERE NOT a IS NOT FALSE;
+id	a
+0	0
+DROP TABLE t1;
+# End of 10.6 tests

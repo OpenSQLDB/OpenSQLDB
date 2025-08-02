@@ -1,0 +1,10 @@
+--- /data/src/bb-10.2-mdev12528/mysql-test/suite/storage_engine/trx/level_read_committed.result
++++ /data/src/bb-10.2-mdev12528/mysql-test/suite/storage_engine/trx/level_read_committed.reject
+@@ -77,6 +77,7 @@
+ CREATE TABLE t1 (a <INT_COLUMN>) ENGINE=<STORAGE_ENGINE> <CUSTOM_TABLE_OPTIONS>;
+ SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+ START TRANSACTION WITH CONSISTENT SNAPSHOT;
++ERROR HY000: Only REPEATABLE READ isolation level is supported for START TRANSACTION WITH CONSISTENT SNAPSHOT in RocksDB Storage Engine.
+ connection con2;
+ INSERT INTO t1 (a) VALUES (1);
+ connection con1;

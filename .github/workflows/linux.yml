@@ -1,0 +1,70 @@
+name: Build on Linux
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'bb-*'
+      - '[0-9]+.[0-9]+'
+      - '*wlad*'
+  pull_request:
+
+jobs:
+  build:
+    name: Build on Ubuntu
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Configure git
+        run: |
+          git config --global core.autocrlf input
+
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            gcc \
+            g++ \
+            bison \
+            libncurses5-dev \
+            libssl-dev \
+            zlib1g-dev \
+            libboost-all-dev \
+            libevent-dev \
+            libgnutls28-dev \
+            perl \
+            libpcre2-dev \
+            libdigest-sha-perl
+
+      - name: Build
+        run: |
+          # Disable unneeded submodules
+          git config submodule.storage/columnstore/columnstore.update none
+          git config submodule.storage/maria/libmarias3.update none
+          git config submodule.storage/rocksdb/rocksdb.update none
+          git config submodule.wsrep-lib.update none
+
+          # Clean and create build directory
+          rm -rf bld
+          mkdir bld
+          cd bld
+
+          # Run CMake with strict flags to avoid ARM paths
+          cmake .. \
+            -DWITH_SSL=bundled \
+            -DCMAKE_SYSTEM_PROCESSOR=x86_64 \
+            -DOPENSSL_ROOT_DIR="" \
+            -DOPENSSL_INCLUDE_DIR="" \
+            -DCMAKE_VERBOSE_MAKEFILE=ON
+
+          # Build
+          make -j2

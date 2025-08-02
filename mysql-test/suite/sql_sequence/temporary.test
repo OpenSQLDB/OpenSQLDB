@@ -1,0 +1,65 @@
+--source include/have_sequence.inc
+--source include/have_innodb.inc
+
+#
+# Test temporary sequences
+#
+
+--echo #
+--echo # Create
+--echo #
+
+create temporary sequence s1 engine=innodb;
+alter table s1 engine myisam;
+--disable_ps2_protocol
+select nextval(s1);
+--enable_ps2_protocol
+select * from s1;
+drop temporary sequence s1;
+
+--echo #
+--echo # MDEV-14762 Server crashes in MDL_ticket::has_stronger_or_equal_type
+--echo # upon inserting into temporary sequence
+--echo #
+
+CREATE TEMPORARY SEQUENCE s1 ENGINE=InnoDB;
+INSERT INTO s1 VALUES (1, 1, 1000, 1, 1, 1, 1, 0);
+DROP TEMPORARY SEQUENCE s1;
+
+--echo #
+--echo # MDEV-13007 ALTER .. ENGINE on temporary sequence may go wrong
+--echo #
+
+--disable_ps2_protocol
+create temporary sequence s1 engine=aria;
+alter table s1 engine myisam;
+select nextval(s1);
+drop temporary sequence s1;
+create temporary sequence s1 engine=innodb;
+alter table s1 engine myisam;
+select nextval(s1);
+drop temporary sequence s1;
+create temporary sequence s1;
+alter table s1 engine innodb;
+select nextval(s1);
+select nextval(s1);
+drop temporary sequence s1;
+--enable_ps2_protocol
+
+--echo # End of 10.6 test
+
+--echo #
+--echo # MDEV-31298 Assertion `!check_foreigns' failed in trx_mod_table_time_t* trx_t::check_bulk_buffer(dict_table_t*), Assertion `table->skip_alter_undo || !check_unique_secondary' failed in trx_t::check_bulk_buffer
+--echo #
+set foreign_key_checks=0,unique_checks=0;
+create table t1 (c1 char,index (c1)) engine=innodb;
+xa start 'a';
+insert into t1 values();
+set foreign_key_checks=1,unique_checks=1;
+--error ER_XAER_RMFAIL
+create temporary sequence f engine=innodb;
+xa end 'a';
+xa rollback 'a';
+drop table t1;
+
+--echo # End of 10.11 test

@@ -1,0 +1,88 @@
+connect  con1, localhost, root;
+set lc_time_names = 'es_MX';
+set time_zone='+10:00';
+set div_precision_increment=20;
+create table t1 (a int, b int, v decimal(20,19) as (a/3));
+create table t2 (a int, b int, v int as (a+@a));
+drop table t2;
+create table t2 (a int, b int, v int as (a+@a) PERSISTENT);
+ERROR HY000: Function or expression '@a' cannot be used in the GENERATED ALWAYS AS clause of `v`
+create table t3_ok (a int, b int, v int as (a+@@error_count));
+create table t3 (a int, b int, v int as (a+@@error_count) PERSISTENT);
+ERROR HY000: Function or expression '@@error_count' cannot be used in the GENERATED ALWAYS AS clause of `v`
+create table t4 (a int, b int, v int as (@a:=a));
+drop table t4;
+create table t4 (a int, b int, v int as (@a:=a) PERSISTENT);
+ERROR HY000: Function or expression '@a' cannot be used in the GENERATED ALWAYS AS clause of `v`
+create table t8 (a int, b int, v varchar(100) as (from_unixtime(a)));
+insert t1 (a,b) values (1,2);
+insert t8 (a,b) values (1234567890,2);
+select * from t1;
+a	b	v
+1	2	0.3333333333333333333
+select * from t8;
+a	b	v
+1234567890	2	2009-02-14 09:31:30
+disconnect con1;
+connection default;
+set time_zone='+1:00';
+flush tables;
+select * from t1;
+a	b	v
+1	2	0.3333333330000000000
+select * from t8;
+a	b	v
+1234567890	2	2009-02-14 00:31:30
+drop table t1, t3_ok, t8;
+#
+# Bug#33141966 - INCONSISTENT BEHAVIOR IF A COLUMN OF TYPE SERIAL IS SET AS GENERATED
+#
+create table t1 (a int, b serial as (a+1));
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'as (a+1))' at line 1
+#
+# End of 10.2 tests
+#
+create table t1 (a int, b real as (rand()), c real as (b) stored);
+ERROR HY000: Function or expression 'b' cannot be used in the GENERATED ALWAYS AS clause of `c`
+create table t1 (a int, b real as (rand()), c real as (b) unique);
+ERROR HY000: Function or expression 'b' cannot be used in the GENERATED ALWAYS AS clause of `c`
+create table t1 (a int auto_increment primary key,
+b int as (a+1), c int as (b+1) stored);
+ERROR HY000: Function or expression 'b' cannot be used in the GENERATED ALWAYS AS clause of `c`
+create table t1 (a int auto_increment primary key,
+b int as (a+1), c int as (b+1) unique);
+ERROR HY000: Function or expression 'b' cannot be used in the GENERATED ALWAYS AS clause of `c`
+#
+# End of 10.3 tests
+#
+#
+# MDEV-29155 CREATE OR REPLACE with self-referencing CHECK hangs forever, cannot be killed
+#
+create table t1 (a int);
+create table t2 (b int)
+# create or replace table t (b int);
+create table t3 (c int, check(exists(select a from t1) or exists(select b from t2)));
+ERROR 42000: CHECK does not support subqueries or stored functions
+create table t3 (c int, check(exists(select c from t3)));
+ERROR 42000: CHECK does not support subqueries or stored functions
+create table t3 (d int);
+create or replace table t3 (c int, check(exists(select a from t1) or exists(select b from t2)));
+ERROR 42000: CHECK does not support subqueries or stored functions
+drop table t3;
+create table t3 (d int);
+create or replace table t3 (c int, check(exists(select c from t3)));
+ERROR 42000: CHECK does not support subqueries or stored functions
+drop table t3;
+create table t3 (c int);
+alter table t3 add check(exists(select a from t1) or exists(select b from t2));
+ERROR 42000: CHECK does not support subqueries or stored functions
+alter table t3 add check(exists(select c from t3));
+ERROR 42000: CHECK does not support subqueries or stored functions
+create table t3 (c int default (select a from t1));
+ERROR HY000: Function or expression 'select ...' cannot be used in the DEFAULT clause of `c`
+create table t3 (c int, d int generated always as (select a from t1 limit 1));
+ERROR HY000: Function or expression 'select ...' cannot be used in the GENERATED ALWAYS AS clause of `d`
+drop tables t1, t2, t3;
+#
+# End of 10.4 tests
+#

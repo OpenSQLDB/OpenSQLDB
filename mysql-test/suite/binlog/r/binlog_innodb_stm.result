@@ -1,0 +1,26 @@
+create table categories(
+cat_id int not null primary key,
+cat_name varchar(255) not null,
+cat_description text
+) engine=innodb;
+create table products(
+prd_id int not null auto_increment primary key,
+prd_name varchar(355) not null,
+prd_price decimal,
+cat_id int not null,
+foreign key fk_cat(cat_id)
+references categories(cat_id)
+on update cascade
+) engine=innodb;
+insert into categories values (1, 'drinks', 'drinks');
+update categories set cat_description=2 where cat_id=1;
+drop table products, categories;
+#
+# MDEV-35081 - Assertion `!n_mysql_tables_in_use' failed after error
+#              upon binary logging of DML involving vector table
+#
+SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+CREATE TABLE t (pk INT PRIMARY KEY, v VECTOR(1) NOT NULL, VECTOR(v)) ENGINE=InnoDB;
+UPDATE t SET pk = 2 WHERE pk = 1;
+ERROR HY000: Cannot execute statement: impossible to write to binary log since BINLOG_FORMAT = STATEMENT and at least one table uses a storage engine limited to row-based logging. InnoDB is limited to row-logging when transaction isolation level is READ COMMITTED or READ UNCOMMITTED.
+DROP TABLE t;

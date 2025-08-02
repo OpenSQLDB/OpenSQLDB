@@ -1,0 +1,9 @@
+!include ../galera_2nodes.cnf
+
+[mysqld.1]
+max_allowed_packet=10M
+innodb_log_file_size=220M
+wsrep_provider_options='gcache.recover=yes;gcache.size=10M;pc.ignore_sb=true;repl.causal_read_timeout=PT90S;base_port=@mysqld.1.#galera_port;pc.wait_prim_timeout=PT60S'
+
+[mysqld.2]
+wsrep_provider_options='gcache.recover=yes;gcache.size=10M;pc.ignore_sb=true;repl.causal_read_timeout=PT90S;base_port=@mysqld.2.#galera_port;pc.wait_prim_timeout=PT60S'

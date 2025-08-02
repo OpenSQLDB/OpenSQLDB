@@ -1,0 +1,32 @@
+--- innodb-remove-encryption.result
++++ innodb-remove-encryption,undo3.reject
+@@ -13,6 +13,9 @@
+ SELECT NAME FROM INFORMATION_SCHEMA.INNODB_TABLESPACES_ENCRYPTION WHERE MIN_KEY_VERSION <> 0;
+ NAME
+ innodb_system
++innodb_undo001
++innodb_undo002
++innodb_undo003
+ mysql/innodb_index_stats
+ mysql/innodb_table_stats
+ mysql/transaction_registry
+@@ -24,6 +27,9 @@
+ SELECT NAME FROM INFORMATION_SCHEMA.INNODB_TABLESPACES_ENCRYPTION WHERE MIN_KEY_VERSION = 0;
+ NAME
+ innodb_system
++innodb_undo001
++innodb_undo002
++innodb_undo003
+ mysql/innodb_index_stats
+ mysql/innodb_table_stats
+ mysql/transaction_registry
+@@ -36,6 +42,9 @@
+ SELECT NAME FROM INFORMATION_SCHEMA.INNODB_TABLESPACES_ENCRYPTION WHERE MIN_KEY_VERSION = 0;
+ NAME
+ innodb_system
++innodb_undo001
++innodb_undo002
++innodb_undo003
+ mysql/innodb_index_stats
+ mysql/innodb_table_stats
+ mysql/transaction_registry
